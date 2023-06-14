@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources:
+  KusipayConnection:
+    Type: AWS::CodeStarConnections::Connection
+    Properties: 
+      ConnectionName: kusipay-connection
+      ProviderType: GitHub
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: "CodePipeline iam role"
+      RoleName: "kusipay-codepipelinerole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DefaultPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codestar-connections:*
+                  - codepipeline:*
+                  - codebuild:*
+                  - s3:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                  - iam:CreateRole
+                  - iam:CreatePolicy
+                  - iam:DeleteRole
+                  - iam:DeletePolicy
+                  - iam:GetRole
+                  - iam:GetRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:PutRolePolicy
+                Resource: "*"
+
+  CodeBuildRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Description: "CodeBuild iam role"
+      RoleName: !Sub "kusipay-codebuildrole"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - 'codebuild.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'CodeBuildRolePolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 's3:GetObject'
+                  - 's3:GetObjectVersion'
+                  - 's3:PutObject'
+                Resource: '*'
+
+  BuildSlsGoProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: "kusipay-buildslsgoproject"
+      Description: "Build serverless go project"
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Environment:
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        Image: "aws/codebuild/standard:7.0"
+        Type: "LINUX_CONTAINER"
+      Source:
+        Type: "CODEPIPELINE"
+        GitCloneDepth: 1
+        BuildSpec: |
+          version: 0.2
+
+          phases:
+            build:
+              commands:
+                - echo "Getting here"
+      Artifacts:
+        Type: "CODEPIPELINE"
+      TimeoutInMinutes: 60
+
+Outputs:
+  ConnectionArn:
+    Description: Connection arn
+    Value: !Ref KusipayConnection
+    Export:
+      Name: kusipay-connection-arn
+  CodePipelieneRoleArn:
+    Description: IamRole arn
+    Value: !GetAtt CodePipelineRole.Arn
+    Export:
+      Name: kusipay-codepipelinerole
+  BuildSlsGoProjectName:
+    Description: CodeBuild project for building sls go
+    Value: !Ref BuildSlsGoProject
+    Export:
+      Name: kusipay-buildslsgoproject

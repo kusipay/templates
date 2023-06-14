@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  Service:
+    Description: Service repository name
+    Type: String
+  Stage:
+    Description: Stage
+    Type: String
+    AllowedValues:
+      - qa
+      - prod
+  Branch:
+    Description: Branch name
+    Type: String
+
+Resources:
+  ArtifactStoreBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Service}-${Stage}-${Branch}-artifactstorebucket"
+      VersioningConfiguration:
+        Status: Enabled
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub "${Service}-${Stage}-${Branch}"
+      ArtifactStore:
+        Location: !Ref ArtifactStoreBucket
+        Type: S3
+      RoleArn: !ImportValue kusipay-codepipelinerole
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              RunOrder: 1
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: '1'
+              Configuration:
+                ConnectionArn: !ImportValue kusipay-codepipelinerole
+                FullRepositoryId: !Sub "kusipay/${Repo}"
+                BranchName: !Ref Branch
+                OutputArtifactFormat: "CODE_ZIP"
+                DetectChanges: "true"
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Namespace: SourceVariables
+        - Name: Approval
+          Actions:
+            - Name: Approval
+              RunOrder: 1
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                CustomData: "Manual Approval"
+        - Name: Build
+          Actions:
+            - Name: Build
+              RunOrder: 1
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !ImportValue kusipay-buildslsgoproject
+                EnvironmentVariables: !Sub '[{"name":"ENV_STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: BuildArtifact
+              Namespace: BuildVariables
