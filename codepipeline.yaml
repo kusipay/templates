@@ -39,7 +39,7 @@ Resources:
                 Category: Source
                 Owner: AWS
                 Provider: CodeStarSourceConnection
-                Version: '1'
+                Version: "1"
               Configuration:
                 ConnectionArn: !ImportValue kusipay-codepipelinerole
                 FullRepositoryId: !Sub "kusipay/${Repo}"
@@ -57,7 +57,7 @@ Resources:
                 Category: Approval
                 Owner: AWS
                 Provider: Manual
-                Version: '1'
+                Version: "1"
               Configuration:
                 CustomData: "Manual Approval"
         - Name: Build
@@ -68,10 +68,10 @@ Resources:
                 Category: Build
                 Owner: AWS
                 Provider: CodeBuild
-                Version: '1'
+                Version: "1"
               Configuration:
                 ProjectName: !ImportValue kusipay-buildslsgoproject
-                EnvironmentVariables: !Sub '[{"name":"ENV_STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: !Sub '[{"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: SourceArtifact
               OutputArtifacts:

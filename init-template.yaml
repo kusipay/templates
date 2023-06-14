@@ -93,7 +93,9 @@ Resources:
           phases:
             build:
               commands:
+                - make build
                 - echo "Getting here"
+                - make deploy
       Artifacts:
         Type: "CODEPIPELINE"
       TimeoutInMinutes: 60
@@ -103,7 +105,7 @@ Outputs:
     Description: Connection arn
     Value: !Ref KusipayConnection
     Export:
-      Name: kusipay-connection-arn
+      Name: kusipay-connectionarn
   CodePipelieneRoleArn:
     Description: IamRole arn
     Value: !GetAtt CodePipelineRole.Arn
