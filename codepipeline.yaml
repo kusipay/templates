@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  Service:
-    Description: Service repository name
+  Repository:
+    Description: Repository name
     Type: String
   Stage:
     Description: Stage
@@ -18,14 +18,14 @@ Resources:
   ArtifactStoreBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${Service}-${Stage}-${Branch}-artifactstorebucket"
+      BucketName: !Sub "${Repository}-${Stage}-${Branch}-artifactstorebucket"
       VersioningConfiguration:
         Status: Enabled
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub "${Service}-${Stage}-${Branch}"
+      Name: !Sub "${Repository}-${Stage}-${Branch}"
       ArtifactStore:
         Location: !Ref ArtifactStoreBucket
         Type: S3
@@ -42,7 +42,7 @@ Resources:
                 Version: "1"
               Configuration:
                 ConnectionArn: !ImportValue kusipay-codepipelinerole
-                FullRepositoryId: !Sub "kusipay/${Repo}"
+                FullRepositoryId: !Sub "kusipay/${Repository}"
                 BranchName: !Ref Branch
                 OutputArtifactFormat: "CODE_ZIP"
                 DetectChanges: "true"
