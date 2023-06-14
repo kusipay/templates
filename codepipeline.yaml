@@ -41,7 +41,7 @@ Resources:
                 Provider: CodeStarSourceConnection
                 Version: "1"
               Configuration:
-                ConnectionArn: !ImportValue kusipay-codepipelinerole
+                ConnectionArn: !ImportValue kusipay-connectionarn
                 FullRepositoryId: !Sub "kusipay/${Repository}"
                 BranchName: !Ref Branch
                 OutputArtifactFormat: "CODE_ZIP"
@@ -49,7 +49,7 @@ Resources:
               OutputArtifacts:
                 - Name: SourceArtifact
               Namespace: SourceVariables
-        - Name: Approval
+        - Name: BuildApproval
           Actions:
             - Name: Approval
               RunOrder: 1
@@ -77,3 +77,28 @@ Resources:
               OutputArtifacts:
                 - Name: BuildArtifact
               Namespace: BuildVariables
+        - Name: RemoveApproval
+          Actions:
+            - Name: Approval
+              RunOrder: 1
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: "1"
+              Configuration:
+                CustomData: "Remove Approval"
+        - Name: Remove
+          Actions:
+            - Name: Remove
+              RunOrder: 1
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !ImportValue kusipay-removeslsproject
+                EnvironmentVariables: !Sub '[{"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
+              InputArtifacts:
+                - Name: SourceArtifact

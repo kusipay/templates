@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Resources:
   KusipayConnection:
     Type: AWS::CodeStarConnections::Connection
-    Properties: 
+    Properties:
       ConnectionName: kusipay-connection
       ProviderType: GitHub
 
@@ -46,33 +46,69 @@ Resources:
                 Resource: "*"
 
   CodeBuildRole:
-    Type: 'AWS::IAM::Role'
+    Type: "AWS::IAM::Role"
     Properties:
       Description: "CodeBuild iam role"
       RoleName: !Sub "kusipay-codebuildrole"
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
-          - Effect: 'Allow'
+          - Effect: "Allow"
             Principal:
               Service:
-                - 'codebuild.amazonaws.com'
+                - "codebuild.amazonaws.com"
             Action:
-              - 'sts:AssumeRole'
+              - "sts:AssumeRole"
       Policies:
-        - PolicyName: 'CodeBuildRolePolicy'
+        - PolicyName: "CodeBuildRolePolicy"
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
-              - Effect: 'Allow'
+              - Effect: "Allow"
                 Action:
-                  - 'logs:CreateLogGroup'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                  - 's3:GetObject'
-                  - 's3:GetObjectVersion'
-                  - 's3:PutObject'
-                Resource: '*'
+                  - s3:*
+                  - logs:*
+                  - lambda:*
+                  - dynamodb:*
+                  - sqs:*
+                  - cloudformation:*
+                  - apigateway:*
+                Resource: "*"
+              - Effect: "Allow"
+                Action:
+                  - iam:PassRole
+                  - iam:GetRole
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:PutRolePolicy
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                  - iam:DeleteRolePolicy
+                Resource: "*"
+
+  RemoveSlsProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: "kusipay-removeslsproject"
+      Description: "Remove serverless project"
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Environment:
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        Image: "aws/codebuild/standard:7.0"
+        Type: "LINUX_CONTAINER"
+      Source:
+        Type: "CODEPIPELINE"
+        GitCloneDepth: 1
+        BuildSpec: |
+          version: 0.2
+
+          phases:
+            build:
+              commands:
+                - make remove
+      Artifacts:
+        Type: "CODEPIPELINE"
+      TimeoutInMinutes: 60
 
   BuildSlsGoProject:
     Type: AWS::CodeBuild::Project
@@ -111,6 +147,11 @@ Outputs:
     Value: !GetAtt CodePipelineRole.Arn
     Export:
       Name: kusipay-codepipelinerole
+  RemoveSlsProjectName:
+    Description: CodeBuild project for removing sls
+    Value: !Ref RemoveSlsProject
+    Export:
+      Name: kusipay-removeslsproject
   BuildSlsGoProjectName:
     Description: CodeBuild project for building sls go
     Value: !Ref BuildSlsGoProject
