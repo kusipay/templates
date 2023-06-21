@@ -59,32 +59,19 @@ Resources:
                 - "codebuild.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      Policies:
-        - PolicyName: "CodeBuildRolePolicy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - s3:*
-                  - logs:*
-                  - lambda:*
-                  - dynamodb:*
-                  - sqs:*
-                  - cloudformation:*
-                  - apigateway:*
-                Resource: "*"
-              - Effect: "Allow"
-                Action:
-                  - iam:PassRole
-                  - iam:GetRole
-                  - iam:CreateRole
-                  - iam:DeleteRole
-                  - iam:PutRolePolicy
-                  - iam:AttachRolePolicy
-                  - iam:DetachRolePolicy
-                  - iam:DeleteRolePolicy
-                Resource: "*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AWSDeepRacerCloudFormationAccessPolicy
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonCognitoPowerUser
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+        - arn:aws:iam::aws:policy/IAMFullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonKinesisFullAccess
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
 
   RemoveSlsProject:
     Type: AWS::CodeBuild::Project
