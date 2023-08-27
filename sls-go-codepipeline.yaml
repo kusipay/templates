@@ -34,7 +34,6 @@ Resources:
         - Name: Source
           Actions:
             - Name: Source
-              RunOrder: 1
               ActionTypeId:
                 Category: Source
                 Owner: AWS
@@ -52,7 +51,6 @@ Resources:
         - Name: BuildApproval
           Actions:
             - Name: Approval
-              RunOrder: 1
               ActionTypeId:
                 Category: Approval
                 Owner: AWS
@@ -63,7 +61,6 @@ Resources:
         - Name: Build
           Actions:
             - Name: Build
-              RunOrder: 1
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -77,28 +74,3 @@ Resources:
               OutputArtifacts:
                 - Name: BuildArtifact
               Namespace: BuildVariables
-        - Name: RemoveApproval
-          Actions:
-            - Name: Approval
-              RunOrder: 1
-              ActionTypeId:
-                Category: Approval
-                Owner: AWS
-                Provider: Manual
-                Version: "1"
-              Configuration:
-                CustomData: "Remove Approval"
-        - Name: Remove
-          Actions:
-            - Name: Remove
-              RunOrder: 1
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Provider: CodeBuild
-                Version: "1"
-              Configuration:
-                ProjectName: !ImportValue kusipay-removeslsproject
-                EnvironmentVariables: !Sub '[{"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
-              InputArtifacts:
-                - Name: SourceArtifact

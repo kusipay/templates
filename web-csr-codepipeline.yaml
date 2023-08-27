@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  Repository:
+    Description: Repository name
+    Type: String
+  Stage:
+    Description: Stage
+    Type: String
+    AllowedValues:
+      - qa
+      - prod
+  Branch:
+    Description: Branch name
+    Type: String
+
+Resources:
+  S3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Sub "${Repository}-${Stage}"
+
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: !Sub "${Repository}-${Stage} Origin Access Control"
+        Name: !Sub "${Repository}-${Stage}-oac"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  CloudFrontDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: "CloudFront Distribution with S3 origin"
+        DefaultRootObject: "index.html"
+        DefaultCacheBehavior:
+          TargetOriginId: "S3Origin"
+          ViewerProtocolPolicy: "allow-all"
+          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6"
+        Origins:
+          - Id: "S3Origin"
+            DomainName: !GetAtt S3Bucket.DomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Id: "S3BucketPolicy"
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AllowCloudFrontAccess"
+            Effect: "Allow"
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: "s3:GetObject"
+            Resource: !Sub "${S3Bucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}
+
+  ArtifactStoreBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Repository}-${Stage}-${Branch}-artifactstorebucket"
+      VersioningConfiguration:
+        Status: Enabled
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub "${Repository}-${Stage}-${Branch}"
+      ArtifactStore:
+        Location: !Ref ArtifactStoreBucket
+        Type: S3
+      RoleArn: !ImportValue kusipay-codepipelinerole
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: "1"
+              Configuration:
+                ConnectionArn: !ImportValue kusipay-connectionarn
+                FullRepositoryId: !Sub "kusipay/${Repository}"
+                BranchName: !Ref Branch
+                OutputArtifactFormat: "CODE_ZIP"
+                DetectChanges: "true"
+              OutputArtifacts:
+                - Name: SourceOutput
+              Namespace: SourceVariables
+        - Name: ManualApproval
+          Actions:
+            - Name: Approval
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: "1"
+              Configuration:
+                CustomData: "Manual Approval"
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !ImportValue kusipay-buildwebcsrproject
+                EnvironmentVariables: !Sub '[{"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Namespace: BuildVariables
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: S3
+                Version: "1"
+              Configuration:
+                BucketName: !Ref S3Bucket
+                Extract: "true"
+              InputArtifacts:
+                - Name: BuildOutput

@@ -73,30 +73,6 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
         - arn:aws:iam::aws:policy/AmazonSSMFullAccess
 
-  RemoveSlsProject:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: "kusipay-removeslsproject"
-      Description: "Remove serverless project"
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Environment:
-        ComputeType: "BUILD_GENERAL1_SMALL"
-        Image: "aws/codebuild/standard:7.0"
-        Type: "LINUX_CONTAINER"
-      Source:
-        Type: "CODEPIPELINE"
-        GitCloneDepth: 1
-        BuildSpec: |
-          version: 0.2
-
-          phases:
-            build:
-              commands:
-                - make remove
-      Artifacts:
-        Type: "CODEPIPELINE"
-      TimeoutInMinutes: 60
-
   BuildSlsGoProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -105,8 +81,8 @@ Resources:
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Environment:
         ComputeType: "BUILD_GENERAL1_SMALL"
-        Image: "aws/codebuild/standard:7.0"
-        Type: "LINUX_CONTAINER"
+        Image: "aws/codebuild/amazonlinux2-aarch64-standard:3.0"
+        Type: "ARM_CONTAINER"
       Source:
         Type: "CODEPIPELINE"
         GitCloneDepth: 1
@@ -123,24 +99,56 @@ Resources:
         Type: "CODEPIPELINE"
       TimeoutInMinutes: 60
 
+  BuildWebCsrProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: "kusipay-buildwebcsrproject"
+      Description: "Build web client server rendering js project"
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Environment:
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        Image: "aws/codebuild/amazonlinux2-aarch64-standard:3.0"
+        Type: "ARM_CONTAINER"
+      Source:
+        Type: "CODEPIPELINE"
+        GitCloneDepth: 1
+        BuildSpec: |
+          version: 0.2
+
+          phases:
+            install:
+              commands:
+                - npm ci
+
+            build:
+              commands:
+                - npm run build
+          artifacts:
+            files:
+              - "**/*"
+            base-directory: "dist"
+      Artifacts:
+        Type: "CODEPIPELINE"
+      TimeoutInMinutes: 60
+
 Outputs:
   ConnectionArn:
     Description: Connection arn
     Value: !Ref KusipayConnection
     Export:
       Name: kusipay-connectionarn
-  CodePipelieneRoleArn:
+  CodePipelineRoleArn:
     Description: IamRole arn
     Value: !GetAtt CodePipelineRole.Arn
     Export:
       Name: kusipay-codepipelinerole
-  RemoveSlsProjectName:
-    Description: CodeBuild project for removing sls
-    Value: !Ref RemoveSlsProject
-    Export:
-      Name: kusipay-removeslsproject
   BuildSlsGoProjectName:
     Description: CodeBuild project for building sls go
     Value: !Ref BuildSlsGoProject
     Export:
       Name: kusipay-buildslsgoproject
+  BuildWebCsrProjectName:
+    Description: CodeBuild project for building web csr
+    Value: !Ref BuildWebCsrProject
+    Export:
+      Name: kusipay-buildwebcsrproject
