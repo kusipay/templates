@@ -49,7 +49,7 @@ Resources:
     Type: "AWS::IAM::Role"
     Properties:
       Description: "CodeBuild iam role"
-      RoleName: !Sub "kusipay-codebuildrole"
+      RoleName: "kusipay-codebuildrole"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -60,18 +60,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
-        - arn:aws:iam::aws:policy/AWSDeepRacerCloudFormationAccessPolicy
-        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
-        - arn:aws:iam::aws:policy/AmazonCognitoPowerUser
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
-        - arn:aws:iam::aws:policy/IAMFullAccess
-        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-        - arn:aws:iam::aws:policy/AmazonKinesisFullAccess
-        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
-        - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
-        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AdministratorAccess
 
   BuildSlsGoProject:
     Type: AWS::CodeBuild::Project
