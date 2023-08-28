@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  Domain:
+    Description: "Domain name"
+    Type: String
+    Default: "kusipay.com"
+
+Resources:
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref Domain
+      HostedZoneConfig:
+        Comment: !Sub "Hosted zone for ${Domain}"
+
+  Certficate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub "*.${Domain}"
+      ValidationMethod: DNS
+      SubjectAlternativeNames:
+        - !Ref Domain
+      DomainValidationOptions:
+        - DomainName: !Ref Domain
+          HostedZoneId: !Ref HostedZone

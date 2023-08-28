@@ -15,57 +15,6 @@ Parameters:
     Type: String
 
 Resources:
-  S3Bucket:
-    Type: "AWS::S3::Bucket"
-    Properties:
-      BucketName: !Sub "${Repository}-${Stage}"
-
-  CloudFrontOriginAccessControl:
-    Type: AWS::CloudFront::OriginAccessControl
-    Properties:
-      OriginAccessControlConfig:
-        Description: !Sub "${Repository}-${Stage} Origin Access Control"
-        Name: !Sub "${Repository}-${Stage}-oac"
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
-
-  CloudFrontDistribution:
-    Type: "AWS::CloudFront::Distribution"
-    Properties:
-      DistributionConfig:
-        Enabled: true
-        Comment: "CloudFront Distribution with S3 origin"
-        DefaultRootObject: "index.html"
-        DefaultCacheBehavior:
-          TargetOriginId: "S3Origin"
-          ViewerProtocolPolicy: "allow-all"
-          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6"
-        Origins:
-          - Id: "S3Origin"
-            DomainName: !GetAtt S3Bucket.DomainName
-            S3OriginConfig:
-              OriginAccessIdentity: ""
-            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
-
-  S3BucketPolicy:
-    Type: "AWS::S3::BucketPolicy"
-    Properties:
-      Bucket: !Ref S3Bucket
-      PolicyDocument:
-        Id: "S3BucketPolicy"
-        Version: "2012-10-17"
-        Statement:
-          - Sid: "AllowCloudFrontAccess"
-            Effect: "Allow"
-            Principal:
-              Service: cloudfront.amazonaws.com
-            Action: "s3:GetObject"
-            Resource: !Sub "${S3Bucket.Arn}/*"
-            Condition:
-              StringEquals:
-                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}
-
   ArtifactStoreBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -134,7 +83,8 @@ Resources:
                 Provider: S3
                 Version: "1"
               Configuration:
-                BucketName: !Ref S3Bucket
+                BucketName:
+                  Fn::ImportValue: !Sub "${Repository}-${Stage}-bucketname"
                 Extract: "true"
               InputArtifacts:
                 - Name: BuildOutput
