@@ -1,17 +1,17 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Resources:
-  KusipayConnection:
+  GitHubConnection:
     Type: AWS::CodeStarConnections::Connection
     Properties:
-      ConnectionName: kusipay-connection
+      ConnectionName: github-connection
       ProviderType: GitHub
 
   CodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
       Description: "CodePipeline iam role"
-      RoleName: "kusipay-codepipelinerole"
+      RoleName: "common-pipelines-codepipelinerole"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -49,7 +49,7 @@ Resources:
     Type: "AWS::IAM::Role"
     Properties:
       Description: "CodeBuild iam role"
-      RoleName: "kusipay-codebuildrole"
+      RoleName: "common-pipelines-codebuildrole"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -65,7 +65,7 @@ Resources:
   BuildSlsGoProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: "kusipay-buildslsgoproject"
+      Name: "common-pipelines-buildslsgoproject"
       Description: "Build serverless go project"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Environment:
@@ -91,7 +91,7 @@ Resources:
   BuildWebCsrProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: "kusipay-buildwebcsrproject"
+      Name: "common-pipelines-buildwebcsrproject"
       Description: "Build web client server rendering js project"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Environment:
@@ -121,23 +121,28 @@ Resources:
       TimeoutInMinutes: 60
 
 Outputs:
-  ConnectionArn:
-    Description: Connection arn
-    Value: !Ref KusipayConnection
+  GitHubConnectionArn:
+    Description: "GitHub connection arn"
+    Value: !Ref GitHubConnection
     Export:
-      Name: kusipay-connectionarn
+      Name: common-pipelines-connectionarn
+  GitHubConnectionOwnerAccountId:
+    Description: "GitHub connection owner account id"
+    Value: !GetAtt GitHubConnection.OwnerAccountId
+    Export:
+      Name: common-pipelines-connectionowneraccountid
   CodePipelineRoleArn:
-    Description: IamRole arn
+    Description: "CodePipeline iam role arn"
     Value: !GetAtt CodePipelineRole.Arn
     Export:
-      Name: kusipay-codepipelinerole
+      Name: common-pipelines-codepipelinerole
   BuildSlsGoProjectName:
-    Description: CodeBuild project for building sls go
+    Description: "CodeBuild project for building sls go"
     Value: !Ref BuildSlsGoProject
     Export:
-      Name: kusipay-buildslsgoproject
+      Name: common-pipelines-buildslsgoproject
   BuildWebCsrProjectName:
-    Description: CodeBuild project for building web csr
+    Description: "CodeBuild project for building web csr"
     Value: !Ref BuildWebCsrProject
     Export:
-      Name: kusipay-buildwebcsrproject
+      Name: common-pipelines-buildwebcsrproject

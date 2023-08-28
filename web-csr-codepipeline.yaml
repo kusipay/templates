@@ -1,17 +1,21 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
+  GithubUsername:
+    Description: "Github username/organization"
+    Type: String
+    Default: kusipay
   Repository:
-    Description: Repository name
+    Description: "Repository name"
     Type: String
   Stage:
-    Description: Stage
+    Description: "Stage"
     Type: String
     AllowedValues:
       - qa
       - prod
   Branch:
-    Description: Branch name
+    Description: "Branch name"
     Type: String
 
 Resources:
@@ -29,7 +33,7 @@ Resources:
       ArtifactStore:
         Location: !Ref ArtifactStoreBucket
         Type: S3
-      RoleArn: !ImportValue kusipay-codepipelinerole
+      RoleArn: !ImportValue common-pipelines-codepipelinerole
       Stages:
         - Name: Source
           Actions:
@@ -40,8 +44,8 @@ Resources:
                 Provider: CodeStarSourceConnection
                 Version: "1"
               Configuration:
-                ConnectionArn: !ImportValue kusipay-connectionarn
-                FullRepositoryId: !Sub "kusipay/${Repository}"
+                ConnectionArn: !ImportValue common-pipelines-connectionarn
+                FullRepositoryId: !Sub "${GithubUsername}/${Repository}"
                 BranchName: !Ref Branch
                 OutputArtifactFormat: "CODE_ZIP"
                 DetectChanges: "true"
@@ -67,7 +71,7 @@ Resources:
                 Provider: CodeBuild
                 Version: "1"
               Configuration:
-                ProjectName: !ImportValue kusipay-buildwebcsrproject
+                ProjectName: !ImportValue common-pipelines-buildwebcsrproject
                 EnvironmentVariables: !Sub '[{"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: SourceOutput
