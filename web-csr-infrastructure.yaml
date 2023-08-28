@@ -49,12 +49,7 @@ Resources:
         DefaultCacheBehavior:
           TargetOriginId: "S3Origin"
           ViewerProtocolPolicy: "redirect-to-https"
-          CachePolicyId:
-            !If [
-              IsProd,
-              "658327ea-f89d-4fab-a63d-7e88639e58f6",
-              "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
-            ]
+          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6"
         Origins:
           - Id: "S3Origin"
             DomainName: !GetAtt S3Bucket.DomainName
