@@ -1,6 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
+  GithubUsername:
+    Description: "Github username/organization"
+    Type: String
+    Default: kusipay
   Repository:
     Description: Repository name
     Type: String
@@ -29,7 +33,7 @@ Resources:
       ArtifactStore:
         Location: !Ref ArtifactStoreBucket
         Type: S3
-      RoleArn: !ImportValue kusipay-codepipelinerole
+      RoleArn: !ImportValue common-pipelines-codepipelinerole
       Stages:
         - Name: Source
           Actions:
@@ -40,15 +44,15 @@ Resources:
                 Provider: CodeStarSourceConnection
                 Version: "1"
               Configuration:
-                ConnectionArn: !ImportValue kusipay-connectionarn
-                FullRepositoryId: !Sub "kusipay/${Repository}"
+                ConnectionArn: !ImportValue common-pipelines-connectionarn
+                FullRepositoryId: !Sub "${GithubUsername}/${Repository}"
                 BranchName: !Ref Branch
                 OutputArtifactFormat: "CODE_ZIP"
                 DetectChanges: "true"
               OutputArtifacts:
-                - Name: SourceArtifact
+                - Name: SourceOutput
               Namespace: SourceVariables
-        - Name: BuildApproval
+        - Name: ManualApproval
           Actions:
             - Name: Approval
               ActionTypeId:
@@ -67,10 +71,10 @@ Resources:
                 Provider: CodeBuild
                 Version: "1"
               Configuration:
-                ProjectName: !ImportValue kusipay-buildslsgoproject
+                ProjectName: !ImportValue common-pipelines-buildapigoproject
                 EnvironmentVariables: !Sub '[{"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: SourceOutput
               OutputArtifacts:
-                - Name: BuildArtifact
+                - Name: BuildOutput
               Namespace: BuildVariables

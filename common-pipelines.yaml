@@ -62,10 +62,10 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
 
-  BuildSlsGoProject:
+  BuildApiGoProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: "common-pipelines-buildslsgoproject"
+      Name: "common-pipelines-buildapigoproject"
       Description: "Build serverless go project"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Environment:
@@ -82,7 +82,6 @@ Resources:
             build:
               commands:
                 - make build
-                - echo "Getting here"
                 - make deploy
       Artifacts:
         Type: "CODEPIPELINE"
@@ -136,11 +135,11 @@ Outputs:
     Value: !GetAtt CodePipelineRole.Arn
     Export:
       Name: common-pipelines-codepipelinerole
-  BuildSlsGoProjectName:
-    Description: "CodeBuild project for building sls go"
-    Value: !Ref BuildSlsGoProject
+  BuildApiGoProjectName:
+    Description: "CodeBuild project for building api go"
+    Value: !Ref BuildApiGoProject
     Export:
-      Name: common-pipelines-buildslsgoproject
+      Name: common-pipelines-buildapigoproject
   BuildWebCsrProjectName:
     Description: "CodeBuild project for building web csr"
     Value: !Ref BuildWebCsrProject
