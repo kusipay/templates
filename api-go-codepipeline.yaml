@@ -62,9 +62,9 @@ Resources:
                 Version: "1"
               Configuration:
                 CustomData: "Manual Approval"
-        - Name: Build
+        - Name: Deploy
           Actions:
-            - Name: Build
+            - Name: Deploy
               ActionTypeId:
                 Category: Build
                 Owner: AWS
