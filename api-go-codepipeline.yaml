@@ -17,6 +17,14 @@ Parameters:
   Branch:
     Description: Branch name
     Type: String
+  SecondLevelDomain:
+    Description: "Second level domain name"
+    Type: String
+    Default: kusipay
+  TopLevelDomain:
+    Description: "Top level domain name"
+    Type: String
+    Default: com
 
 Resources:
   ArtifactStoreBucket:
@@ -72,7 +80,13 @@ Resources:
                 Version: "1"
               Configuration:
                 ProjectName: !ImportValue common-pipelines-buildapigoproject
-                EnvironmentVariables: !Sub '[{"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: !Sub '
+                  [
+                    {"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"},
+                    {"name":"SECOND_LEVEL_DOMAIN","value":"${SecondLevelDomain}","type":"PLAINTEXT"},
+                    {"name":"TOP_LEVEL_DOMAIN","value":"${TopLevelDomain}","type":"PLAINTEXT"}
+                  ]
+                  '
               InputArtifacts:
                 - Name: SourceOutput
               OutputArtifacts:
