@@ -72,7 +72,12 @@ Resources:
                 Version: "1"
               Configuration:
                 ProjectName: !ImportValue common-pipelines-buildwebcsrproject
-                EnvironmentVariables: !Sub '[{"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: !Sub '
+                  [
+                    {"name":"STAGE","value":"${Stage}","type":"PLAINTEXT"},
+                    {"name":"SERVICE","value":"${Repository}","type":"PLAINTEXT"}
+                  ]
+                '
               InputArtifacts:
                 - Name: SourceOutput
               OutputArtifacts:
