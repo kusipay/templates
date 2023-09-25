@@ -107,6 +107,7 @@ Resources:
             build:
               commands:
                 - npm ci
+                - npm run build
                 - npx --yes serverless deploy
       Artifacts:
         Type: "CODEPIPELINE"
