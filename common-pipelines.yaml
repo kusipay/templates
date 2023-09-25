@@ -106,6 +106,7 @@ Resources:
           phases:
             build:
               commands:
+                - npm ci
                 - npx --yes serverless deploy
       Artifacts:
         Type: "CODEPIPELINE"
