@@ -107,8 +107,9 @@ Resources:
             build:
               commands:
                 - npm ci
+                - npm run validate
                 - npm run build
-                - npx --yes serverless deploy
+                - npm run deploy
       Artifacts:
         Type: "CODEPIPELINE"
       TimeoutInMinutes: 60
