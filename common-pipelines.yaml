@@ -62,11 +62,11 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
 
-  BuildApiGoProject:
+  DeployApiGoProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: "common-pipelines-buildapigoproject"
-      Description: "Build serverless go project"
+      Name: "common-pipelines-deployapigoproject"
+      Description: "Deploy serverless go project"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Environment:
         ComputeType: "BUILD_GENERAL1_SMALL"
@@ -168,11 +168,11 @@ Outputs:
     Value: !GetAtt CodePipelineRole.Arn
     Export:
       Name: common-pipelines-codepipelinerole
-  BuildApiGoProjectName:
-    Description: "CodeBuild project for building api go"
-    Value: !Ref BuildApiGoProject
+  DeployApiGoProjectName:
+    Description: "CodeBuild project for deploying api go"
+    Value: !Ref DeployApiGoProject
     Export:
-      Name: common-pipelines-buildapigoproject
+      Name: common-pipelines-deployapigoproject
   DeployApiJsProjectName:
     Description: "CodeBuild project for deploying api js"
     Value: !Ref DeployApiJsProject
