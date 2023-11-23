@@ -23,8 +23,6 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${Repository}-${Stage}-${Branch}-artifactstorebucket"
-      VersioningConfiguration:
-        Status: Enabled
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline

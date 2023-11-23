@@ -1,39 +1,36 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  Repository:
-    Description: "Repository name"
+  Service:
+    Description: "Service name"
     Type: String
   Stage:
     Description: "Stage"
     Type: String
     AllowedValues:
       - qa
+      - uat
       - prod
-  SecondLevelDomain:
-    Description: "Second level domain name"
+  Subdomain:
+    Description: "Subdomain"
     Type: String
-    Default: kusipay
-  TopLevelDomain:
-    Description: "Top level domain name"
-    Type: String
-    Default: com
 
 Conditions:
   IsProd: !Equals [!Ref Stage, "prod"]
+  NoSubdomain: !Equals [!Ref Subdomain, ""]
 
 Resources:
   S3Bucket:
     Type: "AWS::S3::Bucket"
     Properties:
-      BucketName: !Sub "${Repository}-${Stage}"
+      BucketName: !Sub "${Service}-${Stage}-deployment"
 
   CloudFrontOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
       OriginAccessControlConfig:
-        Description: !Sub "${Repository}-${Stage} Origin Access Control"
-        Name: !Sub "${Repository}-${Stage}-oac"
+        Description: !Sub "${Service}-${Stage} Origin Access Control"
+        Name: !Sub "${Service}-${Stage}-oac"
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
@@ -44,7 +41,7 @@ Resources:
       DistributionConfig:
         Enabled: true
         IPV6Enabled: true
-        Comment: !Sub "${Repository}-${Stage} CloudFront Distribution"
+        Comment: !Sub "${Service}-${Stage} CloudFront Distribution"
         DefaultRootObject: "index.html"
         DefaultCacheBehavior:
           TargetOriginId: "S3Origin"
@@ -62,40 +59,36 @@ Resources:
               OriginAccessIdentity: ""
             OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
         Aliases:
-          - !If [
-              IsProd,
-              !Sub "${SecondLevelDomain}.${TopLevelDomain}",
-              !Sub "${Stage}.${SecondLevelDomain}.${TopLevelDomain}",
-            ]
+          - !Sub
+              - "${FormattedStage}${FormattedSubDomain}${Domain}"
+              - Domain: !ImportValue common-domain-domain
+                FormattedSubDomain: !If [NoSubdomain, "", !Sub "${Subdomain}."]
+                FormattedStage: !If [IsProd, "", !If [NoSubdomain, !Sub "${Stage}." , !Sub "${Stage}-"]]
         ViewerCertificate:
-          AcmCertificateArn:
-            Fn::ImportValue: !Sub "${SecondLevelDomain}-${TopLevelDomain}-acmcertificatearn"
+          AcmCertificateArn: !ImportValue common-domain-acmcertificatearn
           MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
 
   Route53RecordSetGroup:
     Type: AWS::Route53::RecordSetGroup
     Properties:
-      Comment: !Sub "${Repository}-${Stage} ${SecondLevelDomain}-${TopLevelDomain} record sets"
-      HostedZoneId:
-        Fn::ImportValue: !Sub "${SecondLevelDomain}-${TopLevelDomain}-hostedzoneid"
+      Comment: !Sub "${Service}-${Stage} record sets"
+      HostedZoneId: !ImportValue common-domain-hostedzoneid
       RecordSets:
-        - Name:
-            !If [
-              IsProd,
-              !Sub "${SecondLevelDomain}.${TopLevelDomain}",
-              !Sub "${Stage}.${SecondLevelDomain}.${TopLevelDomain}",
-            ]
+        - Name: !Sub
+                  - "${FormattedStage}${FormattedSubDomain}${Domain}"
+                  - Domain: !ImportValue common-domain-domain
+                    FormattedSubDomain: !If [NoSubdomain, "", !Sub "${Subdomain}."]
+                    FormattedStage: !If [IsProd, "", !If [NoSubdomain, !Sub "${Stage}." , !Sub "${Stage}-"]]
           Type: A
           AliasTarget:
             DNSName: !GetAtt CloudFrontDistribution.DomainName
             HostedZoneId: Z2FDTNDATAQYW2
-        - Name:
-            !If [
-              IsProd,
-              !Sub "${SecondLevelDomain}.${TopLevelDomain}",
-              !Sub "${Stage}.${SecondLevelDomain}.${TopLevelDomain}",
-            ]
+        - Name: !Sub
+                  - "${FormattedStage}${FormattedSubDomain}${Domain}"
+                  - Domain: !ImportValue common-domain-domain
+                    FormattedSubDomain: !If [NoSubdomain, "", !Sub "${Subdomain}."]
+                    FormattedStage: !If [IsProd, "", !If [NoSubdomain, !Sub "${Stage}." , !Sub "${Stage}-"]]
           Type: AAAA
           AliasTarget:
             DNSName: !GetAtt CloudFrontDistribution.DomainName
@@ -124,4 +117,4 @@ Outputs:
     Description: "Web bucket name"
     Value: !Ref S3Bucket
     Export:
-      Name: !Sub "${Repository}-${Stage}-bucketname"
+      Name: !Sub "${Service}-${Stage}-bucketname"

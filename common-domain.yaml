@@ -1,32 +1,28 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  SecondLevelDomain:
-    Description: "Second level domain name"
+  Domain:
+    Description: "Domain name"
     Type: String
-    Default: kusipay
-  TopLevelDomain:
-    Description: "Top level domain name"
-    Type: String
-    Default: com
+    Default: kusipay.com
 
 Resources:
   HostedZone:
     Type: AWS::Route53::HostedZone
     Properties:
-      Name: !Sub "${SecondLevelDomain}.${TopLevelDomain}"
+      Name: !Ref Domain
       HostedZoneConfig:
-        Comment: !Sub "Hosted zone for ${SecondLevelDomain}.${TopLevelDomain}"
+        Comment: !Sub "Hosted zone for ${Domain}"
 
-  Certficate:
+  Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      DomainName: !Sub "*.${SecondLevelDomain}.${TopLevelDomain}"
+      DomainName: !Sub "*.${Domain}"
       ValidationMethod: DNS
       SubjectAlternativeNames:
-        - !Sub "${SecondLevelDomain}.${TopLevelDomain}"
+        - !Ref Domain
       DomainValidationOptions:
-        - DomainName: !Sub "${SecondLevelDomain}.${TopLevelDomain}"
+        - DomainName: !Ref Domain
           HostedZoneId: !Ref HostedZone
 
 Outputs:
@@ -34,9 +30,14 @@ Outputs:
     Description: "Hosted zone id"
     Value: !Ref HostedZone
     Export:
-      Name: !Sub "${SecondLevelDomain}-${TopLevelDomain}-hostedzoneid"
+      Name: "common-domain-hostedzoneid"
   AcmCertificateArn:
     Description: "Acm certificate arn"
     Value: !Ref Certficate
     Export:
-      Name: !Sub "${SecondLevelDomain}-${TopLevelDomain}-acmcertificatearn"
+      Name: !Sub "common-domain-acmcertificatearn"
+  DomainName:
+    Description: "Domain name"
+    Value: !Ref Domain
+    Export:
+      Name: !Sub "common-domain-domain"
